@@ -1,0 +1,4 @@
+*.dot
+vev
+.venv
+__pycache__
