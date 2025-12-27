@@ -4,9 +4,47 @@ Este projeto implementa uma Inteligência Artificial para jogar o jogo **Toot an
 
 ## 📋 Pré-requisitos
 
-- Python 3.x instalado.
+- Python 3.x instalado.- **Graphviz** (Ferramenta de sistema) - Necessário apenas se você quiser renderizar os gráficos localmente ou usar a biblioteca Python `graphviz`.
 
-## 🚀 Como Executar
+### Instalação do Graphviz no Sistema
+
+Para que a visualização funcione corretamente (caso decida renderizar), instale o Graphviz no seu sistema operacional:
+
+- **Linux (Ubuntu/Debian):**
+  ```bash
+  sudo apt-get install graphviz
+  ```
+
+- **Windows:**
+  Baixe o instalador em [graphviz.org](https://graphviz.org/download/).
+  *Importante:* Durante a instalação, marque a opção **"Add Graphviz to the system PATH for all users"**.
+
+- **macOS:**
+  ```bash
+  brew install graphviz
+  ```
+## � Instalação
+
+1. Clone o repositório (se ainda não tiver):
+   ```bash
+   git clone <URL_DO_REPOSITORIO>
+   cd trabalho_ia
+   ```
+
+2. (Opcional) Crie e ative um ambiente virtual:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Linux/Mac
+   # ou
+   .venv\Scripts\activate     # Windows
+   ```
+
+3. Instale as dependências:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## �🚀 Como Executar
 
 O script principal é o `toot_otto.py`. Ele deve ser executado via linha de comando (terminal) passando os parâmetros de configuração.
 
