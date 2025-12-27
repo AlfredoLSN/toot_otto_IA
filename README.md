@@ -101,6 +101,28 @@ Se você usou a opção de visualização, um arquivo `.dot` foi criado. Para ve
 
 ---
 
+## 🧠 Como funciona a Heurística
+
+A IA avalia o tabuleiro analisando todas as janelas possíveis de 4 células (horizontal, vertical e diagonal). A pontuação é atribuída com base nos padrões encontrados:
+
+| Padrão (Exemplos) | Pontos (TOOT) | Pontos (OTTO) | Significado |
+| :--- | :--- | :--- | :--- |
+| **Vitória** (`TOOT`) | **+10.000** | | Vitória garantida. |
+| **Derrota** (`OTTO`) | | **-10.000** | Derrota garantida. |
+| **Ameaça Forte** (`TOO.`, `T.OT`) | **+100** | | Falta 1 peça para ganhar. |
+| **Ameaça Inimiga** (`OTT.`, `O.TO`) | | **-100** | Inimigo ganha na próxima. |
+| **Potencial** (`TO..`, `T..T`) | **+5** | | Sequência de 2 peças. |
+| **Potencial Inimigo** (`OT..`, `O..O`) | | **-5** | Sequência inimiga de 2 peças. |
+| **Início** (`T...`) | **+1** | | Peça única bem posicionada. |
+| **Início Inimigo** (`O...`) | | **-1** | Peça única inimiga. |
+
+O **Score Final** é a soma de todas as janelas do tabuleiro.
+- **Positivo**: Vantagem para TOOT.
+- **Negativo**: Vantagem para OTTO.
+- **Zero**: Jogo equilibrado.
+
+---
+
 ## 📊 Entendendo o Resultado
 
 O programa exibirá:
