@@ -4,7 +4,8 @@ Este projeto implementa uma Inteligência Artificial para jogar o jogo **Toot an
 
 ## 📋 Pré-requisitos
 
-- Python 3.x instalado.- **Graphviz** (Ferramenta de sistema) - Necessário apenas se você quiser renderizar os gráficos localmente ou usar a biblioteca Python `graphviz`.
+- Python 3.x instalado.
+- **Graphviz** (Ferramenta de sistema) - Necessário apenas se você quiser renderizar os gráficos localmente ou usar a biblioteca Python `graphviz`.
 
 ### Instalação do Graphviz no Sistema
 
