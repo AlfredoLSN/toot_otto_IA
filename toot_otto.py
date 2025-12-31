@@ -37,6 +37,12 @@ class OttoTootIA:
         if len(self.dot_lines) > 50000: return
         self.dot_lines.append(f'  {parent_id} -> {child_id} [label="{label}", fontsize=10];')
 
+    def highlight_path(self, path):
+        if not self.visualizar: return
+        for parent_id, child_id in path:
+            self.dot_lines.append(f'  {parent_id} -> {child_id} [color="red", penwidth=2.5];')
+            self.dot_lines.append(f'  {child_id} [color="red", penwidth=2.0];')
+
     def save_dot_file(self, filename="arvore_decisao.dot"):
         if not self.visualizar: return
         self.dot_lines.append("}")
@@ -154,7 +160,7 @@ class OttoTootIA:
         if depth == 0:
             val = self.evaluate_state()
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
-            return val
+            return val, my_id, []
 
         current_player = 'TOOT' if is_maximizing else 'OTTO'
         valid_moves = self.get_valid_moves(current_player)
@@ -163,28 +169,36 @@ class OttoTootIA:
         if not valid_moves:
             val = self.evaluate_state()
             self.log_node(my_id, f"End\nScore: {val}", "gray")
-            return val
+            return val, my_id, []
 
         if is_maximizing:
             max_eval = -float('inf')
+            best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
-                eval = self.minimax(depth - 1, False, my_id, f"{piece} em {col}")
+                eval, child_id, child_path = self.minimax(depth - 1, False, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
-                max_eval = max(max_eval, eval)
+                
+                if eval > max_eval:
+                    max_eval = eval
+                    best_path = [(my_id, child_id)] + child_path
             
             self.log_node(my_id, f"MAX (D{depth})\nBest: {max_eval}", "lightblue")
-            return max_eval
+            return max_eval, my_id, best_path
         else:
             min_eval = float('inf')
+            best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
-                eval = self.minimax(depth - 1, True, my_id, f"{piece} em {col}")
+                eval, child_id, child_path = self.minimax(depth - 1, True, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
-                min_eval = min(min_eval, eval)
+                
+                if eval < min_eval:
+                    min_eval = eval
+                    best_path = [(my_id, child_id)] + child_path
             
             self.log_node(my_id, f"MIN (D{depth})\nBest: {min_eval}", "lightpink")
-            return min_eval
+            return min_eval, my_id, best_path
 
     # --- ALGORITMO 2: MINIMAX COM PODA ALPHA-BETA ---
 
@@ -200,7 +214,7 @@ class OttoTootIA:
         if depth == 0:
             val = self.evaluate_state()
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
-            return val
+            return val, my_id, []
 
         current_player = 'TOOT' if is_maximizing else 'OTTO'
         valid_moves = self.get_valid_moves(current_player)
@@ -208,16 +222,20 @@ class OttoTootIA:
         if not valid_moves:
             val = self.evaluate_state()
             self.log_node(my_id, f"End\nScore: {val}", "gray")
-            return val
+            return val, my_id, []
 
         if is_maximizing:
             max_eval = -float('inf')
+            best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
-                eval = self.minimax_alpha_beta(depth - 1, alpha, beta, False, my_id, f"{piece} em {col}")
+                eval, child_id, child_path = self.minimax_alpha_beta(depth - 1, alpha, beta, False, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
                 
-                max_eval = max(max_eval, eval)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_path = [(my_id, child_id)] + child_path
+                
                 alpha = max(alpha, eval)
                 
                 # PODA: O minimizador (pai) não vai deixar esse caminho acontecer
@@ -228,15 +246,19 @@ class OttoTootIA:
                     break 
             
             self.log_node(my_id, f"MAX (D{depth})\nBest: {max_eval}\nα={alpha} β={beta}", "lightblue")
-            return max_eval
+            return max_eval, my_id, best_path
         else:
             min_eval = float('inf')
+            best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
-                eval = self.minimax_alpha_beta(depth - 1, alpha, beta, True, my_id, f"{piece} em {col}")
+                eval, child_id, child_path = self.minimax_alpha_beta(depth - 1, alpha, beta, True, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
                 
-                min_eval = min(min_eval, eval)
+                if eval < min_eval:
+                    min_eval = eval
+                    best_path = [(my_id, child_id)] + child_path
+                
                 beta = min(beta, eval)
                 
                 # PODA: O maximizador (pai) não vai deixar esse caminho acontecer
@@ -244,7 +266,7 @@ class OttoTootIA:
                     break
             
             self.log_node(my_id, f"MIN (D{depth})\nBest: {min_eval}\nα={alpha} β={beta}", "lightpink")
-            return min_eval
+            return min_eval, my_id, best_path
 
 # --- BLOCO DE EXECUÇÃO ---
 
@@ -281,7 +303,7 @@ if __name__ == "__main__":
         start_time = time.time()
         
         jogo_mm = OttoTootIA(visualizar=visualizar)
-        score_mm = jogo_mm.minimax(profundidade, True) # True = Começa Maximizing
+        score_mm, root_id, best_path = jogo_mm.minimax(profundidade, True) # True = Começa Maximizing
         
         end_time = time.time()
         tempo_mm = end_time - start_time
@@ -292,6 +314,7 @@ if __name__ == "__main__":
         print(f"   -> Score final calculado: {score_mm}")
         
         if visualizar:
+            jogo_mm.highlight_path(best_path)
             jogo_mm.save_dot_file("arvore_minimax.dot")
 
     elif modo == 1:
@@ -301,7 +324,7 @@ if __name__ == "__main__":
         
         jogo_ab = OttoTootIA(visualizar=visualizar)
         # Alpha = -Infinito, Beta = +Infinito
-        score_ab = jogo_ab.minimax_alpha_beta(profundidade, -float('inf'), float('inf'), True)
+        score_ab, root_id, best_path = jogo_ab.minimax_alpha_beta(profundidade, -float('inf'), float('inf'), True)
         
         end_time = time.time()
         tempo_ab = end_time - start_time
@@ -312,6 +335,7 @@ if __name__ == "__main__":
         print(f"   -> Score final calculado: {score_ab}")
         
         if visualizar:
+            jogo_ab.highlight_path(best_path)
             jogo_ab.save_dot_file("arvore_alphabeta.dot")
 
     else:
