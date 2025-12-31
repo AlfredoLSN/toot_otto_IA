@@ -12,6 +12,12 @@ class OttoTootIA:
         # Contador estatístico
         self.nos_visitados = 0
         
+        # Estoque de peças (Regra Oficial: 6 Ts e 6 Os para cada jogador)
+        self.pieces_count = {
+            'TOOT': {'T': 6, 'O': 6},
+            'OTTO': {'T': 6, 'O': 6}
+        }
+        
         # Visualização
         self.visualizar = visualizar
         self.node_count = 0
@@ -45,31 +51,37 @@ class OttoTootIA:
         """Verifica se a coluna aceita peças (não está cheia)"""
         return 0 <= col < self.cols and self.board[0][col] == '.'
 
-    def make_move(self, col, piece):
+    def make_move(self, col, piece, player):
         """
         Aplica a gravidade: a peça cai até a última linha disponível.
         Retorna a linha onde a peça parou (para facilitar o undo).
+        Atualiza contagem de peças.
         """
+        self.pieces_count[player][piece] -= 1
         for r in range(self.rows - 1, -1, -1):
             if self.board[r][col] == '.':
                 self.board[r][col] = piece
                 return r
         return -1
 
-    def undo_move(self, col, row):
-        """Remove a peça (Backtracking)"""
+    def undo_move(self, col, row, piece, player):
+        """Remove a peça (Backtracking) e restaura contagem"""
         self.board[row][col] = '.'
+        self.pieces_count[player][piece] += 1
 
-    def get_valid_moves(self):
+    def get_valid_moves(self, player):
         """
         Gera todos os filhos possíveis.
-        No Otto Toot: Cada coluna livre gera 2 filhos (jogar T ou jogar O).
+        Considera o limite de peças de cada jogador.
         """
         moves = []
-        pieces = ['T', 'O'] # As duas opções de peça
+        available_pieces = []
+        if self.pieces_count[player]['T'] > 0: available_pieces.append('T')
+        if self.pieces_count[player]['O'] > 0: available_pieces.append('O')
+
         for col in range(self.cols):
             if self.is_valid_move(col):
-                for p in pieces:
+                for p in available_pieces:
                     moves.append((col, p))
         return moves
 
@@ -144,7 +156,8 @@ class OttoTootIA:
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
             return val
 
-        valid_moves = self.get_valid_moves()
+        current_player = 'TOOT' if is_maximizing else 'OTTO'
+        valid_moves = self.get_valid_moves(current_player)
         
         # Se não houver movimentos (tabuleiro cheio), avalia
         if not valid_moves:
@@ -155,9 +168,9 @@ class OttoTootIA:
         if is_maximizing:
             max_eval = -float('inf')
             for col, piece in valid_moves:
-                row = self.make_move(col, piece)
+                row = self.make_move(col, piece, current_player)
                 eval = self.minimax(depth - 1, False, my_id, f"{piece} em {col}")
-                self.undo_move(col, row)
+                self.undo_move(col, row, piece, current_player)
                 max_eval = max(max_eval, eval)
             
             self.log_node(my_id, f"MAX (D{depth})\nBest: {max_eval}", "lightblue")
@@ -165,9 +178,9 @@ class OttoTootIA:
         else:
             min_eval = float('inf')
             for col, piece in valid_moves:
-                row = self.make_move(col, piece)
+                row = self.make_move(col, piece, current_player)
                 eval = self.minimax(depth - 1, True, my_id, f"{piece} em {col}")
-                self.undo_move(col, row)
+                self.undo_move(col, row, piece, current_player)
                 min_eval = min(min_eval, eval)
             
             self.log_node(my_id, f"MIN (D{depth})\nBest: {min_eval}", "lightpink")
@@ -189,7 +202,8 @@ class OttoTootIA:
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
             return val
 
-        valid_moves = self.get_valid_moves()
+        current_player = 'TOOT' if is_maximizing else 'OTTO'
+        valid_moves = self.get_valid_moves(current_player)
         
         if not valid_moves:
             val = self.evaluate_state()
@@ -199,9 +213,9 @@ class OttoTootIA:
         if is_maximizing:
             max_eval = -float('inf')
             for col, piece in valid_moves:
-                row = self.make_move(col, piece)
+                row = self.make_move(col, piece, current_player)
                 eval = self.minimax_alpha_beta(depth - 1, alpha, beta, False, my_id, f"{piece} em {col}")
-                self.undo_move(col, row)
+                self.undo_move(col, row, piece, current_player)
                 
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
@@ -218,9 +232,9 @@ class OttoTootIA:
         else:
             min_eval = float('inf')
             for col, piece in valid_moves:
-                row = self.make_move(col, piece)
+                row = self.make_move(col, piece, current_player)
                 eval = self.minimax_alpha_beta(depth - 1, alpha, beta, True, my_id, f"{piece} em {col}")
-                self.undo_move(col, row)
+                self.undo_move(col, row, piece, current_player)
                 
                 min_eval = min(min_eval, eval)
                 beta = min(beta, eval)
