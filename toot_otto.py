@@ -11,6 +11,7 @@ class OttoTootIA:
         
         # Contador estatístico
         self.nos_visitados = 0
+        self.poda_count = 0
         
         # Estoque de peças (Regra Oficial: 6 Ts e 6 Os para cada jogador)
         self.pieces_count = {
@@ -240,6 +241,7 @@ class OttoTootIA:
                 
                 # PODA: O minimizador (pai) não vai deixar esse caminho acontecer
                 if beta <= alpha:
+                    self.poda_count += 1
                     self.log_node(my_id, f"MAX (D{depth})\nPruned!", "orange") # Indica poda visualmente? Ou apenas o nó normal
                     # Na verdade, se podou, não visitamos os outros filhos.
                     # O nó atual ainda retorna max_eval.
@@ -263,6 +265,7 @@ class OttoTootIA:
                 
                 # PODA: O maximizador (pai) não vai deixar esse caminho acontecer
                 if beta <= alpha:
+                    self.poda_count += 1
                     break
             
             self.log_node(my_id, f"MIN (D{depth})\nBest: {min_eval}\nα={alpha} β={beta}", "lightpink")
@@ -312,6 +315,7 @@ if __name__ == "__main__":
         print(f"   -> Concluído em {tempo_mm:.2f} segundos")
         print(f"   -> Nós gerados: {total_mm}")
         print(f"   -> Score final calculado: {score_mm}")
+        print(f"   -> Podas realizadas: 0")
         
         if visualizar:
             jogo_mm.highlight_path(best_path)
@@ -333,6 +337,7 @@ if __name__ == "__main__":
         print(f"   -> Concluído em {tempo_ab:.2f} segundos")
         print(f"   -> Nós gerados: {total_ab}")
         print(f"   -> Score final calculado: {score_ab}")
+        print(f"   -> Podas realizadas: {jogo_ab.poda_count}")
         
         if visualizar:
             jogo_ab.highlight_path(best_path)
