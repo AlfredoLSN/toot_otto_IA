@@ -146,6 +146,47 @@ class OttoTootIA:
 
         return score
 
+    def check_victory(self):
+        """
+        Verificação REAL de vitória.
+        Retorna 10000 se TOOT formou sequência.
+        Retorna -10000 se OTTO formou sequência.
+        Retorna 0 caso contrário.
+        """
+        # Horizontal
+        for r in range(self.rows):
+            for c in range(self.cols - 3):
+                window = self.board[r][c:c+4]
+                seq = "".join(window)
+                if seq == "TOOT": return 10000
+                if seq == "OTTO": return -10000
+
+        # Vertical
+        for c in range(self.cols):
+            for r in range(self.rows - 3):
+                window = [self.board[r+i][c] for i in range(4)]
+                seq = "".join(window)
+                if seq == "TOOT": return 10000
+                if seq == "OTTO": return -10000
+
+        # Diagonal Positiva (/)
+        for r in range(self.rows - 3):
+            for c in range(self.cols - 3):
+                window = [self.board[r+i][c+i] for i in range(4)]
+                seq = "".join(window)
+                if seq == "TOOT": return 10000
+                if seq == "OTTO": return -10000
+
+        # Diagonal Negativa (\)
+        for r in range(self.rows - 3):
+            for c in range(self.cols - 3):
+                window = [self.board[r+3-i][c+i] for i in range(4)]
+                seq = "".join(window)
+                if seq == "TOOT": return 10000
+                if seq == "OTTO": return -10000
+        
+        return 0
+
     # --- ALGORITMO 1: MINIMAX PURO (SEM PODA) ---
     
     def minimax(self, depth, is_maximizing, parent_id=None, move_from_parent=""):
@@ -157,6 +198,13 @@ class OttoTootIA:
         if parent_id is not None:
             self.log_edge(parent_id, my_id, move_from_parent)
 
+        # 1. Verificação de Vitória REAL (Terminal Check)
+        victory_score = self.check_victory()
+        if victory_score != 0:
+            self.log_node(my_id, f"Win Detected\nScore: {victory_score}", "gold", "star")
+            return victory_score, my_id, []
+
+        # 2. Se atingiu profundidade máxima
         if depth == 0:
             val = self.evaluate_state()
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
@@ -210,6 +258,12 @@ class OttoTootIA:
         # Registra a aresta vinda do pai
         if parent_id is not None:
             self.log_edge(parent_id, my_id, move_from_parent)
+
+        # 1. Verificação de Vitória REAL (Terminal Check)
+        victory_score = self.check_victory()
+        if victory_score != 0:
+            self.log_node(my_id, f"Win Detected\nScore: {victory_score}", "gold", "star")
+            return victory_score, my_id, []
 
         if depth == 0:
             val = self.evaluate_state()
@@ -312,6 +366,13 @@ if __name__ == "__main__":
         print(f"   -> Concluído em {tempo_mm:.2f} segundos")
         print(f"   -> Nós gerados: {total_mm}")
         print(f"   -> Score final calculado: {score_mm}")
+
+        if score_mm >= 10000:
+            print("   -> VITORIA DETECTADA: SIM (TOOT)")
+        elif score_mm <= -10000:
+            print("   -> VITORIA DETECTADA: SIM (OTTO)")
+        else:
+            print("   -> VITORIA DETECTADA: NAO")
         
         if visualizar:
             jogo_mm.highlight_path(best_path)
@@ -333,6 +394,13 @@ if __name__ == "__main__":
         print(f"   -> Concluído em {tempo_ab:.2f} segundos")
         print(f"   -> Nós gerados: {total_ab}")
         print(f"   -> Score final calculado: {score_ab}")
+
+        if score_ab >= 10000:
+            print("   -> VITORIA DETECTADA: SIM (TOOT)")
+        elif score_ab <= -10000:
+            print("   -> VITORIA DETECTADA: SIM (OTTO)")
+        else:
+            print("   -> VITORIA DETECTADA: NAO")
         
         if visualizar:
             jogo_ab.highlight_path(best_path)
