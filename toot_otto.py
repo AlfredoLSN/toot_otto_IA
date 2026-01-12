@@ -51,6 +51,21 @@ class OttoTootIA:
         print(f"\n[VISUALIZAÇÃO] Arquivo '{filename}' gerado com sucesso!")
         print("Use https://dreampuf.github.io/GraphvizOnline/ para visualizar.")
 
+    def print_terminal_board(self, depth, action_desc):
+        """Imprime o tabuleiro no terminal para acompanhar a execução."""
+        # Indentação baseada na profundidade para visualização hierárquica
+        indent = " |  " * (4 - depth) # Ajuste o 4 conforme a profundidade inicial se quiser dinâmico
+        
+        print(f"\n{indent}[{action_desc}] (Restam {depth} níveis)")
+        print(f"{indent}   0 1 2 3 4 5")
+        print(f"{indent}  -------------")
+        for r in range(self.rows):
+            row_str = f"{indent}{r} |"
+            for c in range(self.cols):
+                 row_str += f"{self.board[r][c]}|"
+            print(row_str)
+        print(f"{indent}  -------------")
+
     # --- LÓGICA DO TABULEIRO (FÍSICA) ---
 
     def is_valid_move(self, col):
@@ -187,6 +202,27 @@ class OttoTootIA:
         
         return 0
 
+    def cria_cenario_teste(self):
+        """
+        Cria um tabuleiro onde o TOOT está prestes a ganhar.
+        Temos T-O-O na base, faltando apenas um T.
+        """
+        # Limpa tabuleiro
+        self.board = [['.' for _ in range(self.cols)] for _ in range(self.rows)]
+        
+        # Simula jogo avançado na linha inferior (índice 3)
+        # T - O - O - (Espaço para T)
+        self.make_move(0, 'T', 'TOOT') # Col 0
+        self.make_move(1, 'O', 'OTTO') # Col 1
+        self.make_move(2, 'O', 'TOOT') # Col 2
+        
+        # OTTO tenta bloquear em outro lugar
+        self.make_move(5, 'T', 'OTTO') 
+        
+        print("\n--- CENÁRIO DE TESTE CRIADO ---")
+        print("T-O-O posicionados. O algoritmo deve jogar 'T' na coluna 3 para vencer.")
+        print("-------------------------------")
+
     # --- ALGORITMO 1: MINIMAX PURO (SEM PODA) ---
     
     def minimax(self, depth, is_maximizing, parent_id=None, move_from_parent=""):
@@ -201,12 +237,14 @@ class OttoTootIA:
         # 1. Verificação de Vitória REAL (Terminal Check)
         victory_score = self.check_victory()
         if victory_score != 0:
+            self.print_terminal_board(depth, f"VITORIA DETECTADA (Score: {victory_score})")
             self.log_node(my_id, f"Win Detected\nScore: {victory_score}", "gold", "star")
             return victory_score, my_id, []
 
         # 2. Se atingiu profundidade máxima
         if depth == 0:
             val = self.evaluate_state()
+            self.print_terminal_board(depth, f"PROFUNDIDADE MÁXIMA (Score: {val})")
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
             return val, my_id, []
 
@@ -216,6 +254,7 @@ class OttoTootIA:
         # Se não houver movimentos (tabuleiro cheio), avalia
         if not valid_moves:
             val = self.evaluate_state()
+            self.print_terminal_board(depth, f"EMPATE/TABULEIRO CHEIO (Score: {val})")
             self.log_node(my_id, f"End\nScore: {val}", "gray")
             return val, my_id, []
 
@@ -224,6 +263,7 @@ class OttoTootIA:
             best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
+                
                 eval, child_id, child_path = self.minimax(depth - 1, False, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
                 
@@ -238,6 +278,7 @@ class OttoTootIA:
             best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
+                
                 eval, child_id, child_path = self.minimax(depth - 1, True, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
                 
@@ -262,11 +303,13 @@ class OttoTootIA:
         # 1. Verificação de Vitória REAL (Terminal Check)
         victory_score = self.check_victory()
         if victory_score != 0:
+            self.print_terminal_board(depth, f"VITORIA DETECTADA (Score: {victory_score})")
             self.log_node(my_id, f"Win Detected\nScore: {victory_score}", "gold", "star")
             return victory_score, my_id, []
 
         if depth == 0:
             val = self.evaluate_state()
+            self.print_terminal_board(depth, f"PROFUNDIDADE MÁXIMA (Score: {val})")
             self.log_node(my_id, f"Leaf\nScore: {val}", "lightyellow", "ellipse")
             return val, my_id, []
 
@@ -275,6 +318,7 @@ class OttoTootIA:
         
         if not valid_moves:
             val = self.evaluate_state()
+            self.print_terminal_board(depth, f"EMPATE/TABULEIRO CHEIO (Score: {val})")
             self.log_node(my_id, f"End\nScore: {val}", "gray")
             return val, my_id, []
 
@@ -283,6 +327,7 @@ class OttoTootIA:
             best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
+
                 eval, child_id, child_path = self.minimax_alpha_beta(depth - 1, alpha, beta, False, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
                 
@@ -306,6 +351,7 @@ class OttoTootIA:
             best_path = []
             for col, piece in valid_moves:
                 row = self.make_move(col, piece, current_player)
+
                 eval, child_id, child_path = self.minimax_alpha_beta(depth - 1, alpha, beta, True, my_id, f"{piece} em {col}")
                 self.undo_move(col, row, piece, current_player)
                 
@@ -357,6 +403,8 @@ if __name__ == "__main__":
         start_time = time.time()
         
         jogo_mm = OttoTootIA(visualizar=visualizar)
+        jogo_mm.cria_cenario_teste() # <--- ADICIONADO AQUI PARA FORÇAR TESTE
+        
         score_mm, root_id, best_path = jogo_mm.minimax(profundidade, True) # True = Começa Maximizing
         
         end_time = time.time()
@@ -384,6 +432,8 @@ if __name__ == "__main__":
         start_time = time.time()
         
         jogo_ab = OttoTootIA(visualizar=visualizar)
+        jogo_ab.cria_cenario_teste() # <--- ADICIONADO AQUI PARA FORÇAR TESTE
+        
         # Alpha = -Infinito, Beta = +Infinito
         score_ab, root_id, best_path = jogo_ab.minimax_alpha_beta(profundidade, -float('inf'), float('inf'), True)
         
